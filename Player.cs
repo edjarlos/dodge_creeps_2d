@@ -4,6 +4,9 @@ using System;
 public partial class Player : Area2D
 {
 	//Re-build everytime there is a new export variable/signal
+	[Signal]
+	public delegate void HitEventHandler();
+
 	[Export]
 	public int speed { get; set; } = 400; //How fast the player will move (pixels/sec)
 
@@ -13,6 +16,7 @@ public partial class Player : Area2D
 	public override void _Ready()
 	{
 		Screensize = GetViewportRect().Size;
+		
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -54,6 +58,33 @@ public partial class Player : Area2D
 			x: Mathf.Clamp(Position.X, 0, Screensize.X),
 			y: Mathf.Clamp(Position.Y, 0, Screensize.Y)
 		);
+
+		if (velocity.X != 0)
+		{
+			animatedSprite2D.Animation = "walk";
+			animatedSprite2D.FlipV = false;
+			animatedSprite2D.FlipH = velocity.X < 0;
+		}
+		else if (velocity.Y != 0)
+		{
+			animatedSprite2D.Animation = "up";
+			animatedSprite2D.FlipV = velocity.Y > 0;
+		}
 	}
+
+	public void Start(Vector2 position)
+	{
+		Position = position;
+		Show();
+		GetNode<CollisionShape2D>("CollisionShape2D").Disabled = false;
+	}
+
+	private void OnBodyEntered(Node2D body)
+	{
+		Hide();
+		EmitSignal(SignalName.Hit);
+		GetNode<CollisionShape2D>("CollisionShape2D").SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+	}
+
 }
 //hi
